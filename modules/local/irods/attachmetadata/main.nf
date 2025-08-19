@@ -43,14 +43,31 @@ process IRODS_ATTACHMETADATA {
     fi
 
     # Get existing metadata from iRODS
-    imeta ls \$resource "$irodspath" > existing_metadata.txt
+    get_metadata.sh \$resource "$irodspath" > existing_metadata.csv
+
+    echo "Existing metadata for $irodspath:"
+    cat existing_metadata.csv
+
+    # Remove existing metadata if specified
+    if [ "${task.ext.remove_existing_metadata}" == "true" ]; then
+        echo "Removing existing metadata for $irodspath"
+        while IFS=, read -r key value units; do
+            if [[ -n "\$key" && -n "\$value" ]]; then
+                echo "Removing key=\${key}, value=\${value}, units=\${units} from $irodspath metadata"
+                imeta rm \$resource "$irodspath" "\$key" "\$value" "\$units"
+            fi
+        done < existing_metadata.csv
+        :> existing_metadata.csv # clear file
+    fi
 
     # Load metadata to iRODS
+    echo "Current metadata for $irodspath:"
+    get_metadata.sh \$resource "$irodspath"
     while IFS=\$'\\t' read -r key value; do
         [[ -z "\$key" || -z "\$value" ]] && continue  # skip empty lines
 
         # Check if the key value pair already exists in iRODS metadata
-        if grep -qzP "attribute: \$key\\nvalue: \$value" existing_metadata.txt; then
+        if grep -qzP "\${key},\${value}" existing_metadata.csv; then
             echo "[SKIP] \$key=\$value already present"
         else
             echo "Adding \$key=\$value to iRODS metadata"
