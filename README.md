@@ -24,12 +24,13 @@ This Nextflow pipeline uploads files and directories to iRODS storage with compr
 ### Required Parameters:
 * `--upload` — Path to a CSV file containing upload information with columns: `path` (local filesystem path) and `irodspath` (target iRODS path)
   **OR**
-* `--metadata` — Path to a CSV file containing metadata information with columns: `irodspath` (target iRODS path) and additional metadata key-value pairs
+* `--metadata` — Path to a CSV or JSON file containing metadata information with columns: `irodspath` (target iRODS path) and additional metadata key-value pairs
 
 ### Optional Parameters:
 * `--output_dir` — Output directory for pipeline results (`default: "results"`)
 * `--publish_mode` — File publishing mode (`default: "copy"`)
 * `--ignore_ext` — Comma-separated list of file extensions to ignore during upload (`default: null`)
+* `--remove_existing_metadata` — Remove existing metadata before adding new metadata (`default: false`)
 * `--verbose` — Enable verbose output for detailed logging (`default: false`)
 
 ## Input File Formats
@@ -60,9 +61,28 @@ irodspath,meta1,meta2,meta3
 /archive/cellgeni/target/collection3,value7,value8,value9
 ```
 
+JSON file with the following structure:
+
+```json
+[
+  {
+    "irodspath": "/archive/cellgeni/target/collection1",
+    "meta1": "value1",
+    "meta2": "value2",
+    "meta3": "value3"
+  },
+  {
+    "irodspath": "/archive/cellgeni/target/collection2",
+    "meta1": "value4",
+    "meta2": "value5",
+    "meta3": "value6"
+  }
+]
+```
+
 Where:
 - `irodspath`: Target iRODS collection path for metadata attachment
-- Additional columns: Custom metadata key-value pairs to attach to the collection
+- Additional fields: Custom metadata key-value pairs to attach to the collection
 
 ## Upload Behavior
 
@@ -102,6 +122,20 @@ nextflow run main.nf \
 Attach metadata to existing iRODS collections:
 ```bash
 nextflow run main.nf --metadata metadata.csv
+```
+
+### Metadata Attachment with JSON
+Attach metadata using JSON format:
+```bash
+nextflow run main.nf --metadata metadata.json
+```
+
+### Remove Existing Metadata
+Remove existing metadata before adding new metadata:
+```bash
+nextflow run main.nf \
+    --metadata metadata.csv \
+    --remove_existing_metadata true
 ```
 
 ### Enable Verbose Output
@@ -169,9 +203,10 @@ Metadata is attached to existing iRODS collections. The collections should alrea
 4. Upload results are logged and saved to CSV format
 
 ### Metadata Process
-1. Metadata key-value pairs are extracted from the input CSV
-2. Each metadata attribute is attached to the specified iRODS collection
-3. Existing metadata can be updated or new metadata can be added
+1. Metadata key-value pairs are extracted from the input CSV or JSON file
+2. If `--remove_existing_metadata` is enabled, existing metadata is removed first
+3. Each metadata attribute is attached to the specified iRODS collection
+4. Existing metadata can be updated or new metadata can be added
 
 ## System Requirements
 
@@ -199,5 +234,7 @@ The pipeline generates comprehensive reports in the `reports/` directory:
 - Only one operation mode can be used per pipeline run (`--upload` OR `--metadata`)
 - File paths must be absolute paths to avoid ambiguity
 - iRODS collections for metadata attachment must exist before running the pipeline
+- Metadata files can be in either CSV or JSON format
+- When using `--remove_existing_metadata true`, all existing metadata will be removed before adding new metadata
 - Large file uploads may take considerable time depending on network bandwidth
 - The pipeline is optimized for batch operations rather than single file transfers
