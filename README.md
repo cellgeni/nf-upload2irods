@@ -135,7 +135,7 @@ Remove existing metadata before adding new metadata:
 ```bash
 nextflow run main.nf \
     --metadata metadata.csv \
-    --remove_existing_metadata true
+    --remove_existing_metadata
 ```
 
 ### Enable Verbose Output
@@ -143,7 +143,7 @@ Get detailed logging information during upload:
 ```bash
 nextflow run main.nf \
     --upload upload.csv \
-    --verbose true
+    --verbose
 ```
 
 ### Custom Output Directory
@@ -235,6 +235,6 @@ The pipeline generates comprehensive reports in the `reports/` directory:
 - File paths must be absolute paths to avoid ambiguity
 - iRODS collections for metadata attachment must exist before running the pipeline
 - Metadata files can be in either CSV or JSON format
-- When using `--remove_existing_metadata true`, all existing metadata will be removed before adding new metadata
+- When using `--remove_existing_metadata`, all existing metadata will be removed before adding new metadata
 - Large file uploads may take considerable time depending on network bandwidth
 - The pipeline is optimized for batch operations rather than single file transfers
