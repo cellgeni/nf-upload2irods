@@ -15,14 +15,15 @@ def helpMessage() {
       Required parameters:
         --upload <string>         Path to a CSV file containing upload information with columns: 'path' (local filesystem path) and 'irodspath' (target iRODS path)
         OR
-        --metadata <string>       Path to a CSV file containing metadata information with columns: 'irodspath' (target iRODS path) and additional metadata key-value pairs
+        --metadata <string>       Path to a CSV or JSON file containing metadata information with columns: 'irodspath' (target iRODS path) and additional metadata key-value pairs
 
       Optional parameters:
-        --help                    Display this help message
-        --output_dir              Output directory for pipeline results (default: "results")
-        --publish_mode            File publishing mode (default: "copy")
-        --ignore_ext              Comma-separated list of file extensions to ignore during upload (default: null)
-        --verbose                 Enable verbose output for detailed logging (default: false)
+        --help                      Display this help message
+        --output_dir                Output directory for pipeline results (default: "results")
+        --publish_mode              File publishing mode (default: "copy")
+        --ignore_ext                Comma-separated list of file extensions to ignore during upload (default: null)
+        --remove_existing_metadata  Remove existing metadata before adding new metadata (default: false)
+        --verbose                   Enable verbose output for detailed logging (default: false)
 
       Input file formats:
         
@@ -37,6 +38,22 @@ def helpMessage() {
         /archive/cellgeni/target/collection1,value1,value2,value3
         /archive/cellgeni/target/collection2,value4,value5,value6
         /archive/cellgeni/target/collection3,value7,value8,value9
+        
+        For --metadata parameter (JSON file):
+        [
+          {
+            "irodspath": "/archive/cellgeni/target/collection1",
+            "meta1": "value1",
+            "meta2": "value2",
+            "meta3": "value3"
+          },
+          {
+            "irodspath": "/archive/cellgeni/target/collection2",
+            "meta1": "value4",
+            "meta2": "value5",
+            "meta3": "value6"
+          }
+        ]
 
       Upload behavior:
         - Individual files: Uploaded directly to the specified iRODS path
@@ -60,6 +77,12 @@ def helpMessage() {
         
         # Metadata attachment - Attach metadata to existing iRODS collections
         nextflow run main.nf --metadata metadata.csv
+        
+        # Metadata attachment with JSON format
+        nextflow run main.nf --metadata metadata.json
+        
+        # Remove existing metadata before adding new metadata
+        nextflow run main.nf --metadata metadata.csv --remove_existing_metadata true
         
         # Enable verbose output - Get detailed logging information
         nextflow run main.nf --upload upload.csv --verbose true
@@ -167,11 +190,22 @@ workflow {
     if (params.metadata) {
         // Read metadata file to channel
         metadata = channel.fromPath(params.metadata, checkIfExists: true)
-            .splitCsv(header: true, sep: ',')
+
+        // Split metadata based on file format
+        if (params.metadata.endsWith('.json')) {
+            metadata = metadata.splitJson()
+        } else if (params.metadata.endsWith('.csv')) {
+            metadata = metadata.splitCsv(header: true, sep: ',')
+        } else {
+            log.error("Unsupported metadata file format. Please provide a CSV or JSON file.")
+            error("Unsupported metadata file format. Please provide a CSV or JSON file.")
+        }
+
+        // remove irodspath from contents dict
+        metadata = metadata
             .map { contents -> 
-                // remove irodspath from contents dict
-                def new_meta = [id: contents.irodspath] + contents.findAll { key, value -> key != 'irodspath' }
-                tuple(new_meta, contents.irodspath)
+              def new_meta = [id: contents.irodspath] + contents.findAll { key, value -> key != 'irodspath' }
+              tuple(new_meta, contents.irodspath)
             }
         
         // Attach metadata to iRODS path

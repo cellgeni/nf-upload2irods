@@ -1,0 +1,38 @@
+[
+    {
+        "irodspath": "/archive/cellgeni/test_upload/ERS4938437",
+        "meta1": "val1",
+        "meta2": "val2",
+        "meta3": "val3"
+    },
+    {
+        "irodspath": "/archive/cellgeni/test_upload/ERS4938438",
+        "meta1": "val4",
+        "meta2": "val5",
+        "meta3": "val6"
+    },
+    {
+        "irodspath": "/archive/cellgeni/test_upload/ERS4938439",
+        "meta1": "val7",
+        "meta2": "val8",
+        "meta3": "val9"
+    },
+    {
+        "irodspath": "/archive/cellgeni/test_upload/ERS4938440",
+        "meta1": "val10",
+        "meta2": "val11",
+        "meta3": "val12"
+    },
+    {
+        "irodspath": "/archive/cellgeni/test_upload/files/README.md",
+        "meta1": "val13",
+        "meta2": "val14",
+        "meta3": "val15"
+    },
+    {
+        "irodspath": "/archive/cellgeni/test_upload/files/GSE139369.sra.tsv",
+        "meta1": "val16",
+        "meta2": "val17",
+        "meta3": "val18"
+    }
+]
