@@ -174,7 +174,7 @@ workflow {
         // Upload files to iRODS
         IRODS_STOREFILE(files)
 
-        // Collect versions of the tools used
+        // Collect md5 of the uploaded files
         IRODS_STOREFILE.out.md5
             .collectFile(name: 'md5sums.csv', newLine: false, storeDir: params.output_dir, sort: true, keepHeader: true, skip: 1) { meta, irodspath, md5, md5irods -> 
                 def collection_id = meta.collection_id ?: "file"
