@@ -1,6 +1,6 @@
 def metaToTsv(meta) {
     def tsv_string = meta
-                     .findAll { key, value -> key != 'id' } //drop 'id' and 'path' key
+                     .findAll { key, value -> key != 'id' && value } //drop 'id' and 'path' key
                      .collectMany { key, value ->
                          value.toString()
                               .split(/\s*,\s*/) // split by comma
