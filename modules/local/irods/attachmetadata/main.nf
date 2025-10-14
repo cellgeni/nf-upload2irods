@@ -8,24 +8,24 @@ def metaToTsv(meta) {
                               .findAll { it } // filter out empty strings
                               .collect { v -> "${key}\t${v}" } // create key-value pairs
                     }
-                    .join('\n')
+                    .join('\\n')
                     .stripIndent() // remove leading whitespace
     return tsv_string
 }
 
 process IRODS_ATTACHMETADATA {
-    tag "Attaching metadata for $prefix"
+    tag "Attaching metadata for ${meta.id}"
 
     input:
     tuple val(meta), val(irodspath)
 
     output:
-    path "versions.yml"           , emit: versions
+    path "versions.yml", emit: versions
 
     script:
-    prefix = task.ext.prefix ?: "${meta.id}"
-    irodspath = irodspath.replaceFirst('/$', '') // ensure no trailing slash
-    meta_tsv = metaToTsv(meta)
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def irodspath = irodspath.replaceFirst('/$', '') // ensure no trailing slash
+    def meta_tsv = metaToTsv(meta)
     """
     # Create tsv file with metadata
     echo -e "$meta_tsv" > metadata.tsv
@@ -82,7 +82,7 @@ process IRODS_ATTACHMETADATA {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     echo $args
     
