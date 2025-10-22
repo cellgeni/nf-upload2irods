@@ -1,5 +1,6 @@
 include { IRODS_ATTACHMETADATA } from './modules/local/irods/attachmetadata'
 include { IRODS_STOREFILE } from './modules/local/irods/storefile'
+include { IRODS_GETMETADATA } from './modules/local/irods/getmetadata'
 
 def helpMessage() {
     log.info(
@@ -13,17 +14,17 @@ def helpMessage() {
       Usage: nextflow run main.nf [parameters]
 
       Required parameters:
-        --upload <string>         Path to a CSV file containing upload information with columns: 'path' (local filesystem path) and 'irodspath' (target iRODS path)
+        --upload <string>            Path to a CSV file containing upload information with columns: 'path' (local filesystem path) and 'irodspath' (target iRODS path)
         OR
-        --metadata <string>       Path to a CSV or JSON file containing metadata information with columns: 'irodspath' (target iRODS path) and additional metadata key-value pairs
+        --attach_metadata <string>   Path to a CSV or JSON file containing metadata information with columns: 'irodspath' (target iRODS path) and additional metadata key-value pairs
 
       Optional parameters:
-        --help                      Display this help message
-        --output_dir                Output directory for pipeline results (default: "results")
-        --publish_mode              File publishing mode (default: "copy")
-        --ignore_ext                Comma-separated list of file extensions to ignore during upload (default: null)
-        --remove_existing_metadata  Remove existing metadata before adding new metadata (default: false)
-        --verbose                   Enable verbose output for detailed logging (default: false)
+        --help                       Display this help message
+        --output_dir                 Output directory for pipeline results (default: "results")
+        --publish_mode               File publishing mode (default: "copy")
+        --ignore_ext                 Comma-separated list of file extensions to ignore during upload (default: null)
+        --remove_existing_metadata   Remove existing metadata before adding new metadata (default: false)
+        --verbose                    Enable verbose output for detailed logging (default: false)
 
       Input file formats:
         
@@ -33,13 +34,13 @@ def helpMessage() {
         /path/to/local/directory,/archive/cellgeni/target/directory
         /path/to/another/file.csv,/archive/cellgeni/target/data.csv
         
-        For --metadata parameter (CSV file):
+        For --attach_metadata parameter (CSV file):
         irodspath,meta1,meta2,meta3
         /archive/cellgeni/target/collection1,value1,value2,value3
         /archive/cellgeni/target/collection2,value4,value5,value6
         /archive/cellgeni/target/collection3,value7,value8,value9
         
-        For --metadata parameter (JSON file):
+        For --attach_metadata parameter (JSON file):
         [
           {
             "irodspath": "/archive/cellgeni/target/collection1",
@@ -76,13 +77,13 @@ def helpMessage() {
         nextflow run main.nf --upload upload.csv --ignore_ext ".bam,.fastq.gz,.tmp"
         
         # Metadata attachment - Attach metadata to existing iRODS collections
-        nextflow run main.nf --metadata metadata.csv
+        nextflow run main.nf --attach_metadata metadata.csv
         
         # Metadata attachment with JSON format
-        nextflow run main.nf --metadata metadata.json
+        nextflow run main.nf --attach_metadata metadata.json
         
         # Remove existing metadata before adding new metadata
-        nextflow run main.nf --metadata metadata.csv --remove_existing_metadata true
+        nextflow run main.nf --attach_metadata metadata.csv --remove_existing_metadata true
         
         # Enable verbose output - Get detailed logging information
         nextflow run main.nf --upload upload.csv --verbose true
@@ -113,14 +114,19 @@ def helpMessage() {
 def missingParametersError() {
     log.error("Missing input parameters")
     helpMessage()
-    error("Please provide all required parameters: --upload OR --metadata. See --help for more information.")
+    error("Please provide all required parameters: --upload OR --attach_metadata. See --help for more information.")
 }
 
 workflow {
+    // Check inputs
     if (params.help) {
-    helpMessage()
-    } else if (!((params.upload && !params.metadata) || (!params.upload && params.metadata))) {
-        missingParametersError()
+        helpMessage()
+    } else {
+        // Count how many of the three main parameters are provided
+        def provided_params = [params.upload, params.attach_metadata, params.get_metadata].count { it }
+        if (provided_params != 1) {
+            missingParametersError()
+        }
     }
 
     if (params.upload) {
@@ -187,14 +193,14 @@ workflow {
             }
     }
 
-    if (params.metadata) {
+    if (params.attach_metadata) {
         // Read metadata file to channel
-        metadata = channel.fromPath(params.metadata, checkIfExists: true)
+        metadata = channel.fromPath(params.attach_metadata, checkIfExists: true)
 
         // Split metadata based on file format
-        if (params.metadata.endsWith('.json')) {
+        if (params.attach_metadata.endsWith('.json')) {
             metadata = metadata.splitJson()
-        } else if (params.metadata.endsWith('.csv')) {
+        } else if (params.attach_metadata.endsWith('.csv')) {
             metadata = metadata.splitCsv(header: true, sep: ',')
         } else {
             log.error("Unsupported metadata file format. Please provide a CSV or JSON file.")
@@ -210,5 +216,15 @@ workflow {
         
         // Attach metadata to iRODS path
         IRODS_ATTACHMETADATA(metadata)
+    }
+
+    if (params.get_metadata) {
+        // Read iRODS paths from input file
+        getmetadata = channel.fromPath(params.get_metadata, checkIfExists: true)
+            .splitCsv(header: true, sep: ',')
+            .map { contents -> contents.irodspath }
+
+        // Get metadata for each iRODS path
+        IRODS_GETMETADATA(getmetadata)
     }
 }   
