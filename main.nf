@@ -11,14 +11,16 @@ def helpMessage() {
       nf-upload2irods pipeline
       ===================
       This Nextflow pipeline uploads files and directories to iRODS storage with comprehensive metadata management. 
-      The pipeline supports two main operations: file upload with automatic checksum verification and metadata attachment to existing iRODS collections.
+      The pipeline supports three main operations: file upload with automatic checksum verification, metadata attachment to existing iRODS collections, and metadata retrieval from iRODS collections.
 
       Usage: nextflow run main.nf [parameters]
 
-      Required parameters:
+      Required parameters (choose one):
         --upload <string>            Path to a CSV file containing upload information with columns: 'path' (local filesystem path) and 'irodspath' (target iRODS path)
-        OR
+        OR  
         --attach_metadata <string>   Path to a CSV or JSON file containing metadata information with columns: 'irodspath' (target iRODS path) and additional metadata key-value pairs
+        OR
+        --get_metadata <string>      Path to a CSV file containing iRODS paths with column: 'irodspath' (iRODS path to retrieve metadata from)
 
       Optional parameters:
         --help                       Display this help message
@@ -41,6 +43,12 @@ def helpMessage() {
         /archive/cellgeni/target/collection1,value1,value2,value3
         /archive/cellgeni/target/collection2,value4,value5,value6
         /archive/cellgeni/target/collection3,value7,value8,value9
+        
+        For --get_metadata parameter (CSV file):
+        irodspath
+        /archive/cellgeni/collection1
+        /archive/cellgeni/collection2
+        /archive/cellgeni/collection3
         
         For --attach_metadata parameter (JSON file):
         [
@@ -92,11 +100,16 @@ def helpMessage() {
         
         # Custom output directory - Specify different output location
         nextflow run main.nf --upload upload.csv --output_dir "my_results"
+        
+        # Get metadata from iRODS collections
+        nextflow run main.nf --get_metadata get_metadata.csv
 
       Output files:
         - MD5 checksums file: {output_dir}/md5sums.csv (for upload operations)
           Contains MD5 checksums for all uploaded files with verification data
           Format: collection_id,filepath,irodspath,md5,irodsmd5
+        - Metadata file: {output_dir}/metadata.csv (for get_metadata operations)
+          Contains retrieved metadata from iRODS collections
 
       Expected data structure:
         The pipeline accepts any file or directory structure for upload.
@@ -116,7 +129,7 @@ def helpMessage() {
 def missingParametersError() {
   log.error("Missing input parameters")
   helpMessage()
-  error("Please provide all required parameters: --upload OR --attach_metadata. See --help for more information.")
+  error("Please provide exactly one required parameter: --upload OR --attach_metadata OR --get_metadata. See --help for more information.")
 }
 
 workflow {

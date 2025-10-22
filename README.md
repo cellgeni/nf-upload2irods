@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Nextflow pipeline uploads files and directories to iRODS storage with comprehensive metadata management. The pipeline supports two main operations: file upload with automatic checksum verification and metadata attachment to existing iRODS collections.
+This Nextflow pipeline uploads files and directories to iRODS storage with comprehensive metadata management. The pipeline supports three main operations: file upload with automatic checksum verification, metadata attachment to existing iRODS collections, and metadata retrieval from iRODS collections.
 
 ## Contents of Repo:
 * `main.nf` — the main Nextflow pipeline that orchestrates file uploads and metadata attachment to iRODS
@@ -18,13 +18,16 @@ This Nextflow pipeline uploads files and directories to iRODS storage with compr
 4. **File Filtering**: Applies ignore patterns to exclude specified file types from upload
 5. **iRODS Upload**: Transfers files to iRODS with MD5 checksum verification
 6. **Metadata Attachment**: Attaches custom metadata to iRODS collections (separate operation)
+7. **Metadata Retrieval**: Retrieves metadata from existing iRODS collections (separate operation)
 
 ## Pipeline Parameters
 
-### Required Parameters:
+### Required Parameters (choose one):
 * `--upload` — Path to a CSV file containing upload information with columns: `path` (local filesystem path) and `irodspath` (target iRODS path)
   **OR**
-* `--metadata` — Path to a CSV or JSON file containing metadata information with columns: `irodspath` (target iRODS path) and additional metadata key-value pairs
+* `--attach_metadata` — Path to a CSV or JSON file containing metadata information with columns: `irodspath` (target iRODS path) and additional metadata key-value pairs
+  **OR**
+* `--get_metadata` — Path to a CSV file containing iRODS paths with column: `irodspath` (iRODS path to retrieve metadata from)
 
 ### Optional Parameters:
 * `--output_dir` — Output directory for pipeline results (`default: "results"`)
@@ -35,7 +38,7 @@ This Nextflow pipeline uploads files and directories to iRODS storage with compr
 
 ## Input File Formats
 
-The pipeline supports two distinct operation modes:
+The pipeline supports three distinct operation modes:
 
 ### Option 1: File Upload (`--upload`)
 CSV file with the following structure:
@@ -51,7 +54,7 @@ Where:
 - `path`: Absolute path to the local file or directory to upload
 - `irodspath`: Target path in iRODS where the file/directory should be stored
 
-### Option 2: Metadata Attachment (`--metadata`)
+### Option 2: Metadata Attachment (`--attach_metadata`)
 CSV file with the following structure:
 
 ```csv
@@ -83,6 +86,19 @@ JSON file with the following structure:
 Where:
 - `irodspath`: Target iRODS collection path for metadata attachment
 - Additional fields: Custom metadata key-value pairs to attach to the collection
+
+### Option 3: Metadata Retrieval (`--get_metadata`)
+CSV file with the following structure:
+
+```csv
+irodspath
+/archive/cellgeni/collection1
+/archive/cellgeni/collection2
+/archive/cellgeni/collection3
+```
+
+Where:
+- `irodspath`: iRODS collection path to retrieve metadata from
 
 ## Upload Behavior
 
@@ -121,21 +137,27 @@ nextflow run main.nf \
 ### Metadata Attachment
 Attach metadata to existing iRODS collections:
 ```bash
-nextflow run main.nf --metadata metadata.csv
+nextflow run main.nf --attach_metadata metadata.csv
 ```
 
 ### Metadata Attachment with JSON
 Attach metadata using JSON format:
 ```bash
-nextflow run main.nf --metadata metadata.json
+nextflow run main.nf --attach_metadata metadata.json
 ```
 
 ### Remove Existing Metadata
 Remove existing metadata before adding new metadata:
 ```bash
 nextflow run main.nf \
-    --metadata metadata.csv \
+    --attach_metadata metadata.csv \
     --remove_existing_metadata
+```
+
+### Metadata Retrieval
+Retrieve metadata from existing iRODS collections:
+```bash
+nextflow run main.nf --get_metadata get_metadata.csv
 ```
 
 ### Enable Verbose Output
@@ -182,6 +204,9 @@ The pipeline accepts any file or directory structure. Common use cases include:
 ### For Metadata Attachment
 Metadata is attached to existing iRODS collections. The collections should already exist in iRODS before running the metadata attachment operation.
 
+### For Metadata Retrieval
+Metadata is retrieved from existing iRODS collections. The collections should already exist in iRODS before running the metadata retrieval operation.
+
 ## Output Files
 
 ### Upload Operation
@@ -190,9 +215,14 @@ Metadata is attached to existing iRODS collections. The collections should alrea
   - Includes both local and iRODS checksums for verification
   - Format: `collection_id,filepath,irodspath,md5,irodsmd5`
 
-### Metadata Operation
+### Metadata Attachment Operation
 - Metadata is directly attached to iRODS collections
 - No local output files are generated
+
+### Metadata Retrieval Operation
+- **Metadata file**: `{output_dir}/metadata.csv`
+  - Contains retrieved metadata from specified iRODS collections
+  - Aggregated metadata from all queried collections
 
 ## iRODS Integration
 
@@ -202,11 +232,17 @@ Metadata is attached to existing iRODS collections. The collections should alrea
 3. Checksums are compared to ensure data integrity
 4. Upload results are logged and saved to CSV format
 
-### Metadata Process
+### Metadata Attachment Process
 1. Metadata key-value pairs are extracted from the input CSV or JSON file
 2. If `--remove_existing_metadata` is enabled, existing metadata is removed first
 3. Each metadata attribute is attached to the specified iRODS collection
 4. Existing metadata can be updated or new metadata can be added
+
+### Metadata Retrieval Process
+1. iRODS collection paths are read from the input CSV file
+2. Metadata is retrieved from each specified iRODS collection using `imeta` commands
+3. Retrieved metadata is aggregated and formatted into a consolidated CSV file
+4. The final metadata file is saved to the output directory
 
 ## System Requirements
 
@@ -231,9 +267,9 @@ The pipeline generates comprehensive reports in the `reports/` directory:
 
 ## Usage Notes
 
-- Only one operation mode can be used per pipeline run (`--upload` OR `--metadata`)
+- Only one operation mode can be used per pipeline run (`--upload` OR `--attach_metadata` OR `--get_metadata`)
 - File paths must be absolute paths to avoid ambiguity
-- iRODS collections for metadata attachment must exist before running the pipeline
+- iRODS collections for metadata attachment and retrieval must exist before running the pipeline
 - Metadata files can be in either CSV or JSON format
 - When using `--remove_existing_metadata`, all existing metadata will be removed before adding new metadata
 - Large file uploads may take considerable time depending on network bandwidth
