@@ -1,12 +1,12 @@
 process IRODS_STOREFILE {
-    tag "Loading $irodspath"
+    tag "Loading ${irodspath}"
 
     input:
     tuple val(meta), path(file), val(irodspath)
 
     output:
-    tuple val(meta), val(irodspath), env('md5'), env('irods_md5'),  emit: md5
-    path "versions.yml"      , emit: versions
+    tuple val(meta), val(irodspath), env('md5'), env('irods_md5'), emit: md5
+    path "versions.yml", emit: versions
 
     script:
     def args = task.ext.args ?: "-KV -f -X restart.txt --retries 10 --acl 'read public#archive'"
@@ -15,35 +15,37 @@ process IRODS_STOREFILE {
     module load cellgen/irods
 
     # set file permissions
-    chmod 744 "$file"
+    chmod 744 "${file}"
 
     # calculate MD5
-    md5=\$(md5sum "$file" | awk '{print \$1}')
+    md5=\$(md5sum "${file}" | awk '{print \$1}')
 
     # create iRODS directory if it doesn't exist
-    irodsdir=\$(dirname "$irodspath")
+    irodsdir=\$(dirname "${irodspath}")
     imkdir -p "\$irodsdir"
 
     # Load file to iRODS
-    echo "Loading $file to iRODS at $irodspath"
-    iput $args \
+    echo "Loading ${file} to iRODS at ${irodspath}"
+    iput ${args} \
         -N ${task.cpus} \
         --metadata="md5;\${md5};;" \
-        "$file" "$irodspath"
+        "${file}" "${irodspath}"
 
     # Calculate iRODS md5
     sleep 1 # wait for iRODS to do it's thing
-    irods_md5=\$(ichksum "$irodspath" | awk '{print \$NF}')
+    irods_md5=\$(ichksum "${irodspath}" | awk '{print \$NF}')
 
     # Compare iRODS md5 with local md5
     if [ "\$md5" != "\$irods_md5" ]; then
-        echo "MD5 mismatch for $file: local \$md5, iRODS \$irods_md5"
+        echo "MD5 mismatch for ${file}: local \$md5, iRODS \$irods_md5"
         exit 1
     fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         irods: \$(ienv | grep version | awk '{ print \$3 }')
+        awk: \$(awk --version | head -n1)
+        md5sum: \$(md5sum --version | head -n1 | awk '{ print \$4 }')
     END_VERSIONS
     """
 
@@ -52,11 +54,13 @@ process IRODS_STOREFILE {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     # calculate MD5
-    md5=\$(md5sum "$file" | awk '{print \$1}')
+    md5=\$(md5sum "${file}" | awk '{print \$1}')
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         irods: \$(ienv | grep version | awk '{ print \$3 }')
+        awk: \$(awk --version | head -n1)
+        md5sum: \$(md5sum --version | head -n1 | awk '{ print \$4 }')
     END_VERSIONS
     """
 }
