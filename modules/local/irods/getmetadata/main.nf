@@ -2,10 +2,10 @@ process IRODS_GETMETADATA {
     tag "Getting metadata for ${irodspath}"
 
     input:
-    val irodspath
+    tuple val(meta), val(irodspath)
 
     output:
-    tuple val(irodspath), path("irods_metadata.csv"), emit: csv
+    tuple val(meta), path("irods_metadata.csv"), emit: csv
     path "versions.yml", emit: versions
 
     script:
