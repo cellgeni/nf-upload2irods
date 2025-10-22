@@ -2,7 +2,7 @@ include { IRODS_ATTACHMETADATA    } from './modules/local/irods/attachmetadata'
 include { IRODS_STOREFILE         } from './modules/local/irods/storefile'
 include { IRODS_GETMETADATA       } from './modules/local/irods/getmetadata'
 include { IRODS_AGGREGATEMETADATA } from './modules/local/irods/aggregatemetadata'
-include { CSV_CONCAT              } from './modules/csv/concat'
+include { CSV_CONCAT              } from './modules/local/csv/concat'
 
 def helpMessage() {
   log.info(
