@@ -53,7 +53,7 @@ def main():
     irods_metadata = pd.read_csv(args.input, header=None, names=["attribute", "value", "unit"])
 
     # aggregate duplicated metadata attributes
-    metadata = pd.pivot_table(irods_metadata, values="value", columns="attribute", aggfunc=lambda x: ",".join(x))
+    metadata = pd.pivot_table(irods_metadata, values="value", columns="attribute", aggfunc=lambda x: args.dup_sep.join(x))
     metadata.index = [args.id] if args.id else metadata.index
     metadata.index.name = args.index_name
 
