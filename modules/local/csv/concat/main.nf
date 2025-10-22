@@ -7,13 +7,14 @@ process CSV_CONCAT {
 
     output:
     tuple val(meta), path("*.csv"), emit: csv
+    tuple val(meta), path("*.json"), emit: json
     path "versions.yml", emit: versions
 
     script:
     def prefix = task.ext.prefix ?: "concatenated"
     def args = task.ext.args ?: ""
     """
-    concat.py --input ${csv_files} --prefix "${prefix}.csv" ${args}
+    concat.py --input ${csv_files} --prefix "${prefix}" ${args}
     
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
