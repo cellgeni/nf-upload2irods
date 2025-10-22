@@ -1,10 +1,12 @@
-include { IRODS_ATTACHMETADATA } from './modules/local/irods/attachmetadata'
-include { IRODS_STOREFILE } from './modules/local/irods/storefile'
-include { IRODS_GETMETADATA } from './modules/local/irods/getmetadata'
+include { IRODS_ATTACHMETADATA    } from './modules/local/irods/attachmetadata'
+include { IRODS_STOREFILE         } from './modules/local/irods/storefile'
+include { IRODS_GETMETADATA       } from './modules/local/irods/getmetadata'
+include { IRODS_AGGREGATEMETADATA } from './modules/local/irods/aggregatemetadata'
+include { CSV_CONCAT              } from './modules/csv/concat'
 
 def helpMessage() {
-    log.info(
-      """
+  log.info(
+    """
       ===================
       nf-upload2irods pipeline
       ===================
@@ -108,123 +110,135 @@ def helpMessage() {
 
       For more details, see the README.md file in this repository.
       """.stripIndent()
-    )
+  )
 }
 
 def missingParametersError() {
-    log.error("Missing input parameters")
-    helpMessage()
-    error("Please provide all required parameters: --upload OR --attach_metadata. See --help for more information.")
+  log.error("Missing input parameters")
+  helpMessage()
+  error("Please provide all required parameters: --upload OR --attach_metadata. See --help for more information.")
 }
 
 workflow {
-    // Check inputs
-    if (params.help) {
-        helpMessage()
-    } else {
-        // Count how many of the three main parameters are provided
-        def provided_params = [params.upload, params.attach_metadata, params.get_metadata].count { it }
-        if (provided_params != 1) {
-            missingParametersError()
+  // Check inputs
+  if (params.help) {
+    helpMessage()
+  }
+  else {
+    // Count how many of the three main parameters are provided
+    def provided_params = [params.upload, params.attach_metadata, params.get_metadata].count { it }
+    if (provided_params != 1) {
+      missingParametersError()
+    }
+  }
+
+  if (params.upload) {
+    // Read upload list to channel
+    upload = channel
+      .fromPath(params.upload, checkIfExists: true)
+      .splitCsv(header: true, sep: ',')
+      .branch { contents ->
+        def path = file(contents.path)
+        def meta = [id: path.name, path: contents.path]
+        isFile: path.isFile()
+        return tuple(meta, path, contents.irodspath)
+        isDir: path.isDirectory()
+        return tuple(meta, files(path.toString().replaceFirst('/$', '') + '/**', type: 'file'), path, contents.irodspath)
+        other: true
+      }
+
+    // Collect all files together
+    files = upload.isDir
+      .transpose()
+      .map { meta, filepath, dirpath, irodscollection ->
+        def relativepath = filepath.toString().replaceFirst(dirpath.toString(), '').replaceFirst('/', '')
+        def irodspath = irodscollection.replaceFirst('/$', '') + "/${relativepath}"
+        def file_meta = [id: filepath.name, collection_path: dirpath, path: filepath]
+        tuple(file_meta, filepath, irodspath)
+      }
+      .filter { meta, path, irodspath ->
+        def ignore_ext = params.ignore_ext ? params.ignore_ext.split(',').collect { it.trim() } : []
+        return !ignore_ext.any { ext -> path.name.contains(ext) }
+      }
+      .mix(upload.isFile)
+
+    // Log file counts if verbose is enabled
+    if (params.verbose) {
+      // Count files
+      files
+        .map { meta, path, irodspath ->
+          def new_id = meta.collection_path ? meta.collection_path : "file"
+          tuple(new_id, path)
+        }
+        .groupTuple()
+        .subscribe { id, filelist ->
+          def directory_string = id == "file" ? "Standalone:" : "Directory ${id}:"
+          log.info("${directory_string} ${filelist.size()} files")
         }
     }
 
-    if (params.upload) {
-        // Read upload list to channel
-        upload = channel.fromPath(params.upload, checkIfExists: true)
-            .splitCsv(header: true, sep: ',')
-            // Branch directories and files
-            .branch { contents ->
-                def path = file(contents.path)
-                def meta = [id: path.name, path: contents.path]
-                isFile: path.isFile()
-                    return tuple(meta, path, contents.irodspath)
-                isDir: path.isDirectory()
-                    return tuple(meta, files(path.toString().replaceFirst('/$', '') + '/**', type: 'file'), path, contents.irodspath)
-                other: true
-            }
-        
-        // Collect all files together
-        files = upload.isDir
-            // flatten file lists [meta, [file1, file2, ...], dirpath, irodsdirpath] -> [meta, file1, dirpath, irodsdirpath], [meta, file2, dirpath, irodsdirpath], ...
-            .transpose()
-            // Construct irodspath for each file
-            .map { meta, filepath, dirpath, irodscollection -> 
-                def relativepath = filepath.toString().replaceFirst(dirpath.toString(), '').replaceFirst('/', '')
-                def irodspath = irodscollection.replaceFirst('/$', '') + "/${relativepath}"
-                def file_meta = [id: filepath.name, collection_path: dirpath, path: filepath]
-                tuple(file_meta, filepath, irodspath)
-            }
-            // Filter files if ignore_pattern is provided
-            .filter { meta, path, irodspath ->
-                def ignore_ext = params.ignore_ext ? params.ignore_ext.split(',').collect { it.trim() } : []
-                return !ignore_ext.any { ext -> path.name.contains(ext) }
-            }
-            // Attach files from upload file
-            .mix(upload.isFile)
-          
-        // Log file counts if verbose is enabled
-        if (params.verbose) {
-          // Count files
-            files.map { meta, path, irodspath ->
-                def new_id = meta.collection_path ? meta.collection_path : "file"
-                tuple(new_id, path)
-            }
-            .groupTuple()
-            .subscribe { id, filelist ->
-                def directory_string = id == "file" ? "Standalone:" : "Directory ${id}:"
-                log.info("${directory_string} ${filelist.size()} files")
-            }
-        }
+    // Upload files to iRODS
+    IRODS_STOREFILE(files)
 
-        // Upload files to iRODS
-        IRODS_STOREFILE(files)
+    // Collect md5 of the uploaded files
+    IRODS_STOREFILE.out.md5
+      .collectFile(name: 'md5sums.csv', newLine: false, storeDir: params.output_dir, sort: true, keepHeader: true, skip: 1) { meta, irodspath, md5, md5irods ->
+        def collection_id = meta.collection_id ?: "file"
+        def header = "collection_id,filepath,irodspath,md5,irodsmd5"
+        def line = "${collection_id},${meta.path},${irodspath},${md5},${md5irods}"
+        "${header}\n${line}\n"
+      }
+      .subscribe { __ ->
+        log.info("MD5 checksums saved to ${params.output_dir}/md5sums.csv")
+      }
+  }
 
-        // Collect md5 of the uploaded files
-        IRODS_STOREFILE.out.md5
-            .collectFile(name: 'md5sums.csv', newLine: false, storeDir: params.output_dir, sort: true, keepHeader: true, skip: 1) { meta, irodspath, md5, md5irods -> 
-                def collection_id = meta.collection_id ?: "file"
-                def header = "collection_id,filepath,irodspath,md5,irodsmd5"
-                def line = "${collection_id},${meta.path},${irodspath},${md5},${md5irods}"
-                "${header}\n${line}\n"
-            }
-            .subscribe { __ -> 
-                log.info("MD5 checksums saved to ${params.output_dir}/md5sums.csv")
-            }
+  if (params.attach_metadata) {
+    // Read metadata file to channel
+    metadata = channel.fromPath(params.attach_metadata, checkIfExists: true)
+
+    // Split metadata based on file format
+    if (params.attach_metadata.endsWith('.json')) {
+      metadata = metadata.splitJson()
+    }
+    else if (params.attach_metadata.endsWith('.csv')) {
+      metadata = metadata.splitCsv(header: true, sep: ',')
+    }
+    else {
+      log.error("Unsupported metadata file format. Please provide a CSV or JSON file.")
+      error("Unsupported metadata file format. Please provide a CSV or JSON file.")
     }
 
-    if (params.attach_metadata) {
-        // Read metadata file to channel
-        metadata = channel.fromPath(params.attach_metadata, checkIfExists: true)
-
-        // Split metadata based on file format
-        if (params.attach_metadata.endsWith('.json')) {
-            metadata = metadata.splitJson()
-        } else if (params.attach_metadata.endsWith('.csv')) {
-            metadata = metadata.splitCsv(header: true, sep: ',')
-        } else {
-            log.error("Unsupported metadata file format. Please provide a CSV or JSON file.")
-            error("Unsupported metadata file format. Please provide a CSV or JSON file.")
-        }
-
-        // remove irodspath from contents dict
-        metadata = metadata
-            .map { contents -> 
-              def new_meta = [id: contents.irodspath] + contents.findAll { key, value -> key != 'irodspath' }
-              tuple(new_meta, contents.irodspath)
-            }
-        
-        // Attach metadata to iRODS path
-        IRODS_ATTACHMETADATA(metadata)
+    // remove irodspath from contents dict
+    metadata = metadata.map { contents ->
+      def new_meta = [id: contents.irodspath] + contents.findAll { key, value -> key != 'irodspath' }
+      tuple(new_meta, contents.irodspath)
     }
 
-    if (params.get_metadata) {
-        // Read iRODS paths from input file
-        getmetadata = channel.fromPath(params.get_metadata, checkIfExists: true)
-            .splitCsv(header: true, sep: ',')
-            .map { contents -> contents.irodspath }
+    // Attach metadata to iRODS path
+    IRODS_ATTACHMETADATA(metadata)
+  }
 
-        // Get metadata for each iRODS path
-        IRODS_GETMETADATA(getmetadata)
-    }
-}   
+  if (params.get_metadata) {
+    // Read iRODS paths from input file
+    getmetadata = channel
+      .fromPath(params.get_metadata, checkIfExists: true)
+      .splitCsv(header: true, sep: ',')
+      .map { contents -> tuple([id: contents.irodspath], contents.irodspath) }
+
+    // Get metadata for each iRODS path
+    IRODS_GETMETADATA(getmetadata)
+
+    // Aggregate metadata
+    IRODS_AGGREGATEMETADATA(IRODS_GETMETADATA.out.csv)
+
+    // Concatenate CSV files if multiple
+    metadata = IRODS_AGGREGATEMETADATA.out.csv
+      .toSortedList()
+      .transpose()
+      .toList()
+      .map { _metas, csv_files -> tuple([id: "metadata"], csv_files) }
+
+    CSV_CONCAT(metadata)
+  }
+}
