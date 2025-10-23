@@ -56,7 +56,7 @@ process IRODS_ATTACHMETADATA {
     # Remove existing metadata if specified
     if [ "${task.ext.remove_existing_metadata}" == "true" ]; then
         echo "Removing existing metadata for ${irodspath}"
-        imeta rmw \$resource "${irodspath}" % %
+        imeta rmw \$resource "${irodspath}" % % || echo "No metadata to remove (this is OK)"
         :> existing_metadata.csv # clear file
     fi
 
