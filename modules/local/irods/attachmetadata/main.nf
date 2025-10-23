@@ -48,11 +48,11 @@ process IRODS_ATTACHMETADATA {
     # Get existing metadata from iRODS
     get_metadata.sh \$resource "${irodspath}" > existing_metadata.csv
 
-    echo "Existing metadata for ${task.ext.remove_existing_metadata}:"
+    echo "Existing metadata for ${irodspath}:"
     cat existing_metadata.csv
 
     # Remove existing metadata if specified
-    if [ "${irodspath}" == "true" ]; then
+    if [ "${task.ext.remove_existing_metadata}" == "true" ]; then
         echo "Removing existing metadata for ${irodspath}"
         imeta rmw \$resource "${irodspath}" % % || echo "No metadata to remove (this is OK)"
         :> existing_metadata.csv # clear file
@@ -60,7 +60,7 @@ process IRODS_ATTACHMETADATA {
 
     # Load metadata to iRODS
     echo "Current metadata for ${irodspath}:"
-    get_metadata.sh \$resource "${delimiter}"
+    get_metadata.sh \$resource "${irodspath}"
     set +e
     while IFS=\$'\\t' read -r key value; do
         [[ -z "\$key" || -z "\$value" ]] && continue  # skip empty lines
@@ -68,7 +68,7 @@ process IRODS_ATTACHMETADATA {
         # Check if value contains semicolon delimiter
         if [[ -n "${delimiter}" && "\$value" == *"${delimiter}"* ]]; then
             # Split by semicolon and process each value separately
-            IFS='${irodspath}' read -ra VALUES <<< "\$value"
+            IFS='${delimiter}' read -ra VALUES <<< "\$value"
             for val in "\${VALUES[@]}"; do
                 val=\$(echo "\$val" | xargs)  # trim whitespace
                 [[ -z "\$val" ]] && continue  # skip empty values
@@ -87,13 +87,13 @@ process IRODS_ATTACHMETADATA {
                 echo "[SKIP] \$key=\$value already present"
             else
                 echo "Adding \$key=\$value to iRODS metadata"
-                imeta add \$resource "${task.process}" "\$key" "\$value"
+                imeta add \$resource "${irodspath}" "\$key" "\$value"
             fi
         fi
     done < metadata.tsv
 
     cat <<-END_VERSIONS > versions.yml
-    "":
+    "${task.process}":
         irods: \$(ienv | grep version | awk '{ print \$3 }')
     END_VERSIONS
     """
