@@ -11,7 +11,21 @@ process IRODS_GETMETADATA {
     script:
     """
     set -euo pipefail
-    imeta ls -C ${irodspath} \
+
+    # Check if irodspath exists
+    name=\$(basename "${irodspath}")
+    coll=\$(dirname "${irodspath}")
+    if iquest --no-page "SELECT COLL_ID WHERE COLL_NAME = '${irodspath}'" | grep -q 'COLL_ID'; then
+        resource="-C"
+    elif iquest --no-page "SELECT DATA_ID WHERE COLL_NAME = '\$coll' AND DATA_NAME = '\$name'" | grep -q 'DATA_ID'; then
+        resource="-d"
+    else
+        echo "Error: iRODS path ${irodspath} does not exist."
+        exit 1
+    fi
+
+    # Get metadata from iRODS
+    imeta ls \$resource ${irodspath} \
         | grep -E 'attribute|value|units' \
         | sed -e 's/^attribute: //' -e 's/^value: //' -e 's/^units: //' \
         | awk 'NR%3!=0 {printf "\\\"%s\\\",", \$0} NR%3==0 {printf "\\\"%s\\\"\\n", \$0}' > irods_metadata.csv
