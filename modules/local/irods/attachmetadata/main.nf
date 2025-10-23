@@ -56,12 +56,7 @@ process IRODS_ATTACHMETADATA {
     # Remove existing metadata if specified
     if [ "${task.ext.remove_existing_metadata}" == "true" ]; then
         echo "Removing existing metadata for ${irodspath}"
-        while IFS=, read -r key value units; do
-            if [[ -n "\$key" && -n "\$value" ]]; then
-                echo "Removing key=\${key}, value=\${value}, units=\${units} from ${irodspath} metadata"
-                imeta rm \$resource "${irodspath}" "\$key" "\$value" "\$units"
-            fi
-        done < existing_metadata.csv
+        imeta rmw \$resource "${irodspath}" % %
         :> existing_metadata.csv # clear file
     fi
 
