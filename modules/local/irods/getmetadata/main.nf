@@ -13,11 +13,9 @@ process IRODS_GETMETADATA {
     set -euo pipefail
 
     # Check if irodspath exists
-    name=\$(basename "${irodspath}")
-    coll=\$(dirname "${irodspath}")
-    if iquest --no-page "SELECT COLL_ID WHERE COLL_NAME = '${irodspath}'" | grep -q 'COLL_ID'; then
+    if ils -d "${irodspath}" | grep -q ':\$'; then
         resource="-C"
-    elif iquest --no-page "SELECT DATA_ID WHERE COLL_NAME = '\$coll' AND DATA_NAME = '\$name'" | grep -q 'DATA_ID'; then
+    elif ils -d "${irodspath}"; then
         resource="-d"
     else
         echo "Error: iRODS path ${irodspath} does not exist."

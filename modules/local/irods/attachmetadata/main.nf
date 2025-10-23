@@ -36,11 +36,9 @@ process IRODS_ATTACHMETADATA {
     echo -e "${meta_tsv}" > metadata.tsv
 
     # Check if irodspath exists
-    name=\$(basename "${irodspath}")
-    coll=\$(dirname "${irodspath}")
-    if iquest --no-page "SELECT COLL_ID WHERE COLL_NAME = '${irodspath}'" | grep -q 'COLL_ID'; then
+    if ils -d "${irodspath}" | grep -q ':\$'; then
         resource="-C"
-    elif iquest --no-page "SELECT DATA_ID WHERE COLL_NAME = '\$coll' AND DATA_NAME = '\$name'" | grep -q 'DATA_ID'; then
+    elif ils -d "${irodspath}"; then
         resource="-d"
     else
         echo "Error: iRODS path ${irodspath} does not exist."
@@ -50,11 +48,11 @@ process IRODS_ATTACHMETADATA {
     # Get existing metadata from iRODS
     get_metadata.sh \$resource "${irodspath}" > existing_metadata.csv
 
-    echo "Existing metadata for ${irodspath}:"
+    echo "Existing metadata for ${task.ext.remove_existing_metadata}:"
     cat existing_metadata.csv
 
     # Remove existing metadata if specified
-    if [ "${task.ext.remove_existing_metadata}" == "true" ]; then
+    if [ "${irodspath}" == "true" ]; then
         echo "Removing existing metadata for ${irodspath}"
         imeta rmw \$resource "${irodspath}" % % || echo "No metadata to remove (this is OK)"
         :> existing_metadata.csv # clear file
@@ -62,7 +60,7 @@ process IRODS_ATTACHMETADATA {
 
     # Load metadata to iRODS
     echo "Current metadata for ${irodspath}:"
-    get_metadata.sh \$resource "${irodspath}"
+    get_metadata.sh \$resource "${delimiter}"
     set +e
     while IFS=\$'\\t' read -r key value; do
         [[ -z "\$key" || -z "\$value" ]] && continue  # skip empty lines
@@ -70,7 +68,7 @@ process IRODS_ATTACHMETADATA {
         # Check if value contains semicolon delimiter
         if [[ -n "${delimiter}" && "\$value" == *"${delimiter}"* ]]; then
             # Split by semicolon and process each value separately
-            IFS='${delimiter}' read -ra VALUES <<< "\$value"
+            IFS='${irodspath}' read -ra VALUES <<< "\$value"
             for val in "\${VALUES[@]}"; do
                 val=\$(echo "\$val" | xargs)  # trim whitespace
                 [[ -z "\$val" ]] && continue  # skip empty values
@@ -89,13 +87,13 @@ process IRODS_ATTACHMETADATA {
                 echo "[SKIP] \$key=\$value already present"
             else
                 echo "Adding \$key=\$value to iRODS metadata"
-                imeta add \$resource "${irodspath}" "\$key" "\$value"
+                imeta add \$resource "${task.process}" "\$key" "\$value"
             fi
         fi
     done < metadata.tsv
 
     cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
+    "":
         irods: \$(ienv | grep version | awk '{ print \$3 }')
     END_VERSIONS
     """
