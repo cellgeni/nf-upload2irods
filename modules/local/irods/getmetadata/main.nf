@@ -30,7 +30,7 @@ process IRODS_GETMETADATA {
         | awk 'NR%3!=0 {printf "\\\"%s\\\",", \$0} NR%3==0 {printf "\\\"%s\\\"\\n", \$0}' > irods_metadata.csv
     
     cat <<-END_VERSIONS > versions.yml
-    "":
+    "${task.process}":
         irods: \$(ienv | grep version | awk '{ print \$3 }')
         awk: \$(awk --version | head -n1)
         sed: \$(sed --version | head -n1 | awk '{ print \$4 }')
