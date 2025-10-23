@@ -11,7 +11,8 @@ def metaToTsv(meta) {
         }
         .join('\\n')
         .stripIndent()
-    // remove leading whitespace
+        .replaceAll('"', '\\\\"')
+    // remove leading whitespace and escape quotes
     return tsv_string
 }
 
