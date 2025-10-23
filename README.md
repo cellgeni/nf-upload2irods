@@ -5,10 +5,14 @@
 This Nextflow pipeline uploads files and directories to iRODS storage with comprehensive metadata management. The pipeline supports three main operations: file upload with automatic checksum verification, metadata attachment to existing iRODS collections, and metadata retrieval from iRODS collections.
 
 ## Contents of Repo:
-* `main.nf` — the main Nextflow pipeline that orchestrates file uploads and metadata attachment to iRODS
+* `main.nf` — the main Nextflow pipeline that orchestrates file uploads and metadata management with iRODS
 * `nextflow.config` — configuration script for IBM LSF submission on Sanger's HPC with Singularity containers and global parameters
+* `configs/` — configuration files for individual pipeline modules
 * `modules/local/irods/storefile/` — module for uploading files to iRODS with checksum verification
 * `modules/local/irods/attachmetadata/` — module for attaching metadata to iRODS collections
+* `modules/local/irods/getmetadata/` — module for retrieving metadata from iRODS collections
+* `modules/local/irods/aggregatemetadata/` — module for aggregating retrieved metadata
+* `modules/local/csv/concat/` — module for concatenating CSV files
 
 ## Pipeline Workflow
 
@@ -34,6 +38,9 @@ This Nextflow pipeline uploads files and directories to iRODS storage with compr
 * `--publish_mode` — File publishing mode (`default: "copy"`)
 * `--ignore_ext` — Comma-separated list of file extensions to ignore during upload (`default: null`)
 * `--remove_existing_metadata` — Remove existing metadata before adding new metadata (`default: false`)
+* `--dup_meta_separator` — Separator for splitting multiple values in metadata fields (`default: ";"`)
+* `--metadata_index_name` — Column name for iRODS path in metadata files (`default: "irodspath"`)
+* `--join` — Join method for metadata operations (`default: "outer"`)
 * `--verbose` — Enable verbose output for detailed logging (`default: false`)
 
 ## Input File Formats
@@ -86,6 +93,7 @@ JSON file with the following structure:
 Where:
 - `irodspath`: Target iRODS collection path for metadata attachment
 - Additional fields: Custom metadata key-value pairs to attach to the collection
+- Values can contain multiple entries separated by the `--dup_meta_separator` (default: ";") which will create separate metadata entries for each value
 
 ### Option 3: Metadata Retrieval (`--get_metadata`)
 CSV file with the following structure:
@@ -117,6 +125,21 @@ When `--ignore_ext` is specified, files containing the specified extensions are 
 ```bash
 --ignore_ext ".bam,.fastq.gz,.tmp"
 ```
+
+### Metadata Value Splitting
+When attaching metadata, values can contain multiple entries separated by a delimiter (default: ";"). Each entry will create a separate metadata attribute with the same key:
+
+**Input CSV:**
+```csv
+irodspath,authors,keywords
+/archive/collection1,"John Doe;Jane Smith","genomics;analysis"
+```
+
+**Result:** Creates four separate metadata entries:
+- `authors = John Doe`
+- `authors = Jane Smith` 
+- `keywords = genomics`
+- `keywords = analysis`
 
 ## Examples
 
@@ -174,6 +197,22 @@ Specify a different output directory for results:
 nextflow run main.nf \
     --upload upload.csv \
     --output_dir "my_results"
+```
+
+### Custom Metadata Separator
+Use semicolons to split multiple values in metadata fields:
+```bash
+nextflow run main.nf \
+    --attach_metadata metadata.csv \
+    --dup_meta_separator ";"
+```
+
+### Custom Metadata Index Column
+Use a different column name for iRODS paths:
+```bash
+nextflow run main.nf \
+    --attach_metadata metadata.csv \
+    --metadata_index_name "irods_collection_path"
 ```
 
 ## Expected Data Structure

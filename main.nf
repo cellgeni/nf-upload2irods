@@ -28,6 +28,9 @@ def helpMessage() {
         --publish_mode               File publishing mode (default: "copy")
         --ignore_ext                 Comma-separated list of file extensions to ignore during upload (default: null)
         --remove_existing_metadata   Remove existing metadata before adding new metadata (default: false)
+        --dup_meta_separator         Separator for splitting multiple values in metadata fields (default: ";")
+        --metadata_index_name        Column name for iRODS path in metadata files (default: "irodspath")
+        --join                       Join method for metadata operations (default: "outer")
         --verbose                    Enable verbose output for detailed logging (default: false)
 
       Input file formats:
@@ -103,6 +106,12 @@ def helpMessage() {
         
         # Get metadata from iRODS collections
         nextflow run main.nf --get_metadata get_metadata.csv
+        
+        # Use custom separator for metadata values with multiple entries
+        nextflow run main.nf --attach_metadata metadata.csv --dup_meta_separator ";"
+        
+        # Use custom column name for iRODS paths
+        nextflow run main.nf --attach_metadata metadata.csv --metadata_index_name "irods_collection_path"
 
       Output files:
         - MD5 checksums file: {output_dir}/md5sums.csv (for upload operations)
