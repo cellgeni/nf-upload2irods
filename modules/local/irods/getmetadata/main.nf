@@ -14,7 +14,7 @@ process IRODS_GETMETADATA {
     imeta ls -C ${irodspath} \
         | grep -E 'attribute|value|units' \
         | sed -e 's/^attribute: //' -e 's/^value: //' -e 's/^units: //' \
-        | awk 'NR%3!=0 {printf "%s,", \$0} NR%3==0 {print \$0}' > irods_metadata.csv
+        | awk 'NR%3!=0 {printf "\\\"%s\\\",", \$0} NR%3==0 {printf "\\\"%s\\\"\\n", \$0}' > irods_metadata.csv
     
     cat <<-END_VERSIONS > versions.yml
     "":
