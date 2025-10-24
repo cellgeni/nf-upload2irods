@@ -62,21 +62,18 @@ def main():
     # Check if file exists and not empty
     if not os.path.isfile(args.input) or os.path.getsize(args.input) == 0:
         logging.warning(f"Input file '{args.input}' is empty or does not exist - creating empty output files")
-        # create empty output files
-        with open("metadata.csv", "w") as csv_file:
-            csv_file.write("")
         
-        with open("metadata.json", "w") as json_file:
-            json.dump({}, json_file, indent=4)
-        return
+        # Create a DataFrame with only index column
+        metadata = pd.DataFrame(index=[args.id] if args.id else None)
+        metadata.index.name = args.index_name
+    else:
+        # read input metadata file
+        irods_metadata = pd.read_csv(args.input, header=None, names=["attribute", "value", "unit"])
 
-    # read input metadata file
-    irods_metadata = pd.read_csv(args.input, header=None, names=["attribute", "value", "unit"])
-
-    # aggregate duplicated metadata attributes
-    metadata = pd.pivot_table(irods_metadata, values="value", columns="attribute", aggfunc=lambda x: args.dup_sep.join(x))
-    metadata.index = [args.id] if args.id else metadata.index
-    metadata.index.name = args.index_name
+        # aggregate duplicated metadata attributes
+        metadata = pd.pivot_table(irods_metadata, values="value", columns="attribute", aggfunc=lambda x: args.dup_sep.join(x))
+        metadata.index = [args.id] if args.id else metadata.index
+        metadata.index.name = args.index_name
 
     # save aggregated metadata
     metadata.to_csv("metadata.csv", index=True if args.id else False)
