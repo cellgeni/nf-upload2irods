@@ -15,6 +15,7 @@ tools:
       documentation: https://pandas.pydata.org/docs/
       licence: BSD-3-Clause
       identifier: "biotools:pandas"
+      args_id: "$args"
 input:
   - - meta:
         type: map
