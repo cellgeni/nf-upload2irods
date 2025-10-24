@@ -12,7 +12,7 @@ nextflow_process {
             script "../../getmetadata/main.nf"
             process {
                 """
-                input[0] = [ [id: "data_object_1"], "/seq/illumina/runs/41/41796/lane1/plex1/41796_1#1.cram" ]
+                input[0] = [ [id: "cram"], "/seq/illumina/runs/41/41796/lane1/plex1/41796_1#1.cram" ]
                 """
             }
         }
@@ -21,7 +21,7 @@ nextflow_process {
             script "../../getmetadata/main.nf"
             process {
                 """
-                input[0] = [ [id: "data_object_1"], "/seq/illumina/cellranger-arc/cellranger-arc202_count_43c2d8dd1eaf98b635896165fd98ae3a" ]
+                input[0] = [ [id: "cellranger_arc"], "/seq/illumina/cellranger-arc/cellranger-arc202_count_43c2d8dd1eaf98b635896165fd98ae3a" ]
                 """
             }
         }
@@ -30,7 +30,7 @@ nextflow_process {
             script "../../getmetadata/main.nf"
             process {
                 """
-                input[0] = [ [id: "data_object_1"], "/archive/cellgeni/multiome" ]
+                input[0] = [ [id: "empty"], "/archive/cellgeni/multiome" ]
                 """
             }
         }
@@ -99,7 +99,7 @@ nextflow_process {
                 { assert process.out.versions },
                 { assert process.out.csv },
                 { assert process.out.json },
-                { assert path(process.out.csv.get(0).get(1)).size() == 0},
+                { assert path(process.out.csv.get(0).get(1)).csv.rows[0] == ["irodspath": "empty"] },
                 { assert snapshot(process.out).match() }
             )
         }
