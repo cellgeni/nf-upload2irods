@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 
+import os
+import json
 import argparse
 import pandas as pd
 import json
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s'
+)
 
 def init_parser() -> argparse.ArgumentParser:
     """
@@ -45,9 +54,21 @@ def main():
     """
     Main function of the script
     """
+    
     # parse script arguments
     parser = init_parser()
     args = parser.parse_args()
+
+    # Check if file exists and not empty
+    if not os.path.isfile(args.input) or os.path.getsize(args.input) == 0:
+        logging.warning(f"Input file '{args.input}' is empty or does not exist - creating empty output files")
+        # create empty output files
+        with open("metadata.csv", "w") as csv_file:
+            csv_file.write("")
+        
+        with open("metadata.json", "w") as json_file:
+            json.dump({}, json_file, indent=4)
+        return
 
     # read input metadata file
     irods_metadata = pd.read_csv(args.input, header=None, names=["attribute", "value", "unit"])
