@@ -56,6 +56,10 @@ def main():
     # concatenate .csv files
     result = pd.concat(csv_files, axis=args.axis, join=args.join)
 
+    # sort values and columns
+    result = result.reindex(sorted(result.columns), axis=1)
+    result = result.sort_values(by=result.columns.tolist())
+
     # save result
     result.to_csv(f"{args.prefix}.csv", index=False)
     result.to_json(f"{args.prefix}.json", orient="records", lines=True, indent=4)
