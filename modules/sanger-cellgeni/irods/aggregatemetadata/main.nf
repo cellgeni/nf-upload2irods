@@ -11,7 +11,7 @@ process IRODS_AGGREGATEMETADATA {
     path "versions.yml", emit: versions
 
     script:
-    def args = task.ext.args ?: '--dup-sep "," --index_name "id"'
+    def args = task.ext.args ?: '--dup-sep ";" --index_name "id"'
     """
     aggregate_metadata.py \
         ${args} \

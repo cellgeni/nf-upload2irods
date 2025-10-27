@@ -6,10 +6,12 @@ nextflow_process {
     tag "modules"
     tag "irods"
     tag "irods/aggregatemetadata"
+    tag "modules_sangercellgeni"
 
     setup {
         run("IRODS_GETMETADATA", alias: "CRAM") {
             script "../../getmetadata/main.nf"
+            config "../../getmetadata/module.config"
             process {
                 """
                 input[0] = [ [id: "cram"], "/seq/illumina/runs/41/41796/lane1/plex1/41796_1#1.cram" ]
@@ -19,6 +21,7 @@ nextflow_process {
 
         run("IRODS_GETMETADATA", alias: "CELLRANGER_ARC_OUTPUT") {
             script "../../getmetadata/main.nf"
+            config "../../getmetadata/module.config"
             process {
                 """
                 input[0] = [ [id: "cellranger_arc"], "/seq/illumina/cellranger-arc/cellranger-arc202_count_43c2d8dd1eaf98b635896165fd98ae3a" ]
@@ -28,6 +31,7 @@ nextflow_process {
 
         run("IRODS_GETMETADATA", alias: "EMPTY") {
             script "../../getmetadata/main.nf"
+            config "../../getmetadata/module.config"
             process {
                 """
                 input[0] = [ [id: "empty"], "/archive/cellgeni/multiome" ]
@@ -38,6 +42,7 @@ nextflow_process {
 
     test("Cellranger ARC output metadata aggregation") {
         tag "cellranger_arc"
+        config "../module.config"
 
         when {
             process {
@@ -61,6 +66,7 @@ nextflow_process {
 
     test(".cram file metadata aggregation") {
         tag "cram"
+        config "../module.config"
 
         when {
             process {
@@ -84,6 +90,7 @@ nextflow_process {
 
     test("Empty file output metadata aggregation") {
         tag "empty"
+        config "../module.config"
 
         when {
             process {

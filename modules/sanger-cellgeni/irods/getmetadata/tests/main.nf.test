@@ -1,11 +1,13 @@
 nextflow_process {
     name "Test Process: IRODS_GETMETADATA"
     script "../main.nf"
+    config "../module.config"
     process "IRODS_GETMETADATA"
 
     tag "modules"
     tag "irods"
     tag "irods/getmetadata"
+    tag "modules_sangercellgeni"
 
     test("Get data object metadata") {
         tag "data_object"

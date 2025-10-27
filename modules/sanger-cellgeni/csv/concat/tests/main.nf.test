@@ -6,11 +6,17 @@ nextflow_process {
     tag "modules"
     tag "csv"
     tag "csv/concat"
+    tag "modules_sangercellgeni"
 
     test("Concatenate multiple CSV files") {
         tag "basic"
+        config "../module.config"
 
         when {
+            params {
+                test_data_base = "https://raw.githubusercontent.com/cellgeni/nf-upload2irods/4d31aff47e156c8256f990da525e68bb7bc134af/tests/data/"
+            }
+
             process {
                 """
                 input[0] = [
