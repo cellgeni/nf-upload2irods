@@ -1,3 +1,11 @@
-irodspath,10x:pipeline,10x:reference,analysis_type,description,id_run,library_type,sample,sample_accession_number,sample_common_name,sample_donor_id,sample_history,sample_id,sample_lims,sample_supplier_name,sample_uuid,study,study_accession_number,study_id,study_title
-/archive/cellgeni/tests/cellranger-arc,/software/sciops/external/cellranger-arc/2.0.2/cellranger-arc,/nfs/srpipe_references/downloaded_from_10X/refdata-cellranger-arc-GRCh38-2020-A-2.0.0,cellranger-arc count,cellranger-arc202_count_46601_WS_wEMB13400246_and_46635_WS_wEMB13400220_and_47606_WS_wEMB13400220_and_47800_WS_wEMB14079242_GRCh38-2020-A-2_0_0,46601;46635;47606;47800,Chromium single cell 3 prime v3;Chromium single cell ATAC,WS_wEMB13400220;WS_wEMB13400246,EGAN00004216893;EGAN00004216921,Human,WS_wEMB13400220;WS_wEMB13400246,[2025-03-15T23:54:28+00:00] WS_wEMB14079242,8575725;8575957,SQSCP,F147_Sec9_a_ATAC;F147_Sec9_a_GEX,34eda214-8b70-11ed-a0c0-fa163eea3084;3e1ca74c-8b78-11ed-b765-fa163eac3af7,HCA Embryo Foetal WSSS Dev RNA,EGAS00001005190,6439,HCA Embryo Foetal WSSS Dev RNA
-/archive/cellgeni/tests/cellranger-atac,/software/sciops/external/cellranger-arc/2.0.2/cellranger-arc,/nfs/srpipe_references/downloaded_from_10X/refdata-cellranger-arc-GRCh38-2020-A-2.0.0,cellranger-arc count,cellranger-arc202_count_46601_WS_wEMB13400234_and_46635_WS_wEMB13400208_and_47606_WS_wEMB13400208_GRCh38-2020-A-2_0_0,46601;46635;47606,Chromium single cell 3 prime v3;Chromium single cell ATAC,WS_wEMB13400208;WS_wEMB13400234,EGAN00004216881;EGAN00004216910,Human,WS_wEMB13400208;WS_wEMB13400234,,8575713;8575945,SQSCP,F147_Sec3_a_ATAC;F147_Sec3_a_GEX,347d49ba-8b70-11ed-a0c0-fa163eea3084;3d2e62a8-8b78-11ed-b765-fa163eac3af7,HCA Embryo Foetal WSSS Dev RNA,EGAS00001005190,6439,HCA Embryo Foetal WSSS Dev RNA
+irodspath,pipeline,module
+/archive/cellgeni/tests/cellranger-arc,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-atac,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-count,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-count-nogz,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/multiplex-flex,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/sample-multiplexing,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/singleplex-crispr,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/starsolo,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/csv/concat,nf-upload2irods,csv/concat;irods/attachmetadata;irods/getmetadata
+/archive/cellgeni/tests/csv/concat/file1.csv,nf-upload2irods,csv/concat;irods/attachmetadata;irods/getmetadata

@@ -1,6 +1,11 @@
 irodspath
-/seq/illumina/cellranger-arc/cellranger-arc202_count_6a266d8bd7f5d8d75176374b725570fd
-/seq/illumina/cellranger-arc/cellranger-arc202_count_43c2d8dd1eaf98b635896165fd98ae3a
-/archive/cellgeni/multiome/internal/cellranger_arc/6541/AY_PAED13216533AY_PAED13229621/
-/seq/illumina/runs/48/48394/lane1/plex39/48394_1#39.cram
-/seq/illumina/runs/48/48394/lane1/plex40/48394_1#40.cram
+/archive/cellgeni/tests/cellranger-arc
+/archive/cellgeni/tests/cellranger-atac
+/archive/cellgeni/tests/cellranger-count
+/archive/cellgeni/tests/cellranger-count-nogz
+/archive/cellgeni/tests/multiplex-flex
+/archive/cellgeni/tests/sample-multiplexing
+/archive/cellgeni/tests/singleplex-crispr
+/archive/cellgeni/tests/starsolo
+/archive/cellgeni/tests/csv/concat
+/archive/cellgeni/tests/csv/concat/file1.csv
