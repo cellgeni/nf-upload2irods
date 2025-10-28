@@ -1,8 +1,8 @@
-include { IRODS_ATTACHMETADATA    } from './modules/local/irods/attachmetadata'
-include { IRODS_STOREFILE         } from './modules/local/irods/storefile'
-include { IRODS_GETMETADATA       } from './modules/local/irods/getmetadata'
-include { IRODS_AGGREGATEMETADATA } from './modules/local/irods/aggregatemetadata'
-include { CSV_CONCAT              } from './modules/local/csv/concat'
+include { IRODS_ATTACHMETADATA    } from './modules/sanger-cellgeni/irods/attachmetadata'
+include { IRODS_STOREFILE         } from './modules/sanger-cellgeni/irods/storefile'
+include { IRODS_GETMETADATA       } from './modules/sanger-cellgeni/irods/getmetadata'
+include { IRODS_AGGREGATEMETADATA } from './modules/sanger-cellgeni/irods/aggregatemetadata'
+include { CSV_CONCAT              } from './modules/sanger-cellgeni/csv/concat'
 
 def helpMessage() {
   log.info(
@@ -156,8 +156,7 @@ workflow {
 
   if (params.upload) {
     // Read upload list to channel
-    upload = channel
-      .fromPath(params.upload, checkIfExists: true)
+    upload = channel.fromPath(params.upload, checkIfExists: true)
       .splitCsv(header: true, sep: ',')
       .branch { contents ->
         def path = file(contents.path)
@@ -243,8 +242,7 @@ workflow {
 
   if (params.get_metadata) {
     // Read iRODS paths from input file
-    getmetadata = channel
-      .fromPath(params.get_metadata, checkIfExists: true)
+    getmetadata = channel.fromPath(params.get_metadata, checkIfExists: true)
       .splitCsv(header: true, sep: ',')
       .map { contents -> tuple([id: contents.irodspath], contents.irodspath) }
 

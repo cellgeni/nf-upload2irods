@@ -13,6 +13,8 @@ This Nextflow pipeline uploads files and directories to iRODS storage with compr
 * `modules/local/irods/getmetadata/` — module for retrieving metadata from iRODS collections
 * `modules/local/irods/aggregatemetadata/` — module for aggregating retrieved metadata
 * `modules/local/csv/concat/` — module for concatenating CSV files
+* `examples/` — example input files for different pipeline operations
+* `tests/` — test data and configurations for pipeline validation
 
 ## Pipeline Workflow
 
@@ -289,20 +291,38 @@ Metadata is retrieved from existing iRODS collections. The collections should al
 - **Singularity**: For containerized execution
 - **iRODS client**: Access to iRODS commands (`iput`, `imeta`, etc.)
 - **LSF**: For job submission on HPC clusters (configured for Sanger's environment)
+- **Python**: Python 3.x with pandas for metadata aggregation operations
+
+## Testing
+
+The pipeline includes comprehensive testing infrastructure:
+- **nf-test**: Testing framework for Nextflow modules and workflows
+- **Test data**: Example files located in `tests/` directory
+- **Module tests**: Individual module testing in `modules/*/tests/` directories
+- **Example files**: Sample input files in `examples/` directory for each operation mode
+
+To run tests:
+```bash
+nf-test test
+```
 
 ## Error Handling
 
 - **File not found**: Pipeline will fail if specified local files/directories don't exist
-- **iRODS connection**: Pipeline will retry failed iRODS operations up to 5 times
+- **iRODS connection**: Pipeline will retry failed iRODS operations up to 5 times, then ignore on final failure
 - **Checksum mismatch**: Upload failures are reported in the output logs
 - **Invalid CSV format**: Pipeline validates CSV headers and structure
+- **Empty metadata**: Modules handle empty metadata gracefully with appropriate warnings
+- **Path resolution**: Automatic detection of iRODS collections vs data objects, including symbolic links
 
 ## Monitoring and Logging
 
 The pipeline generates comprehensive reports in the `reports/` directory:
 - **Timeline report**: Visual timeline of task execution
-- **Execution report**: Detailed resource usage and performance metrics
+- **Execution report**: Detailed resource usage and performance metrics  
 - **Trace file**: Complete execution trace for debugging
+
+All temporary work files are stored in `nf-work/` directory and can be cleaned up after successful execution.
 
 ## Usage Notes
 
@@ -313,3 +333,6 @@ The pipeline generates comprehensive reports in the `reports/` directory:
 - When using `--remove_existing_metadata`, all existing metadata will be removed before adding new metadata
 - Large file uploads may take considerable time depending on network bandwidth
 - The pipeline is optimized for batch operations rather than single file transfers
+- Configuration files in `configs/` directory allow fine-tuning of individual modules
+- The pipeline uses Singularity containers with specific images for Python-based operations
+- All modules include comprehensive metadata documentation in `meta.yml` files

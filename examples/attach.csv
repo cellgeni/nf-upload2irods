@@ -1,0 +1,11 @@
+irodspath,pipeline,module
+/archive/cellgeni/tests/cellranger-arc,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-atac,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-count,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/cellranger-count-nogz,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/multiplex-flex,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/sample-multiplexing,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/singleplex-crispr,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/starsolo,nf-cellbender,cellbender/removebackground
+/archive/cellgeni/tests/csv/concat,nf-upload2irods,csv/concat;irods/attachmetadata;irods/getmetadata
+/archive/cellgeni/tests/csv/concat/file1.csv,nf-upload2irods,csv/concat;irods/attachmetadata;irods/getmetadata

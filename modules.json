@@ -1,0 +1,37 @@
+{
+  "name": "cellgeni/nf-upload2irods",
+  "homePage": "https://github.com/cellgeni/upload2irods",
+  "repos": {
+    "https://github.com/cellgeni/nf-modules.git": {
+      "modules": {
+        "sanger-cellgeni": {
+          "csv/concat": {
+            "branch": "irods",
+            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "installed_by": ["modules"]
+          },
+          "irods/aggregatemetadata": {
+            "branch": "irods",
+            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "installed_by": ["modules"]
+          },
+          "irods/attachmetadata": {
+            "branch": "irods",
+            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "installed_by": ["modules"]
+          },
+          "irods/getmetadata": {
+            "branch": "irods",
+            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "installed_by": ["modules"]
+          },
+          "irods/storefile": {
+            "branch": "irods",
+            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    }
+  }
+}

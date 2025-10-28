@@ -1,3 +1,11 @@
 irodspath
-/seq/illumina/cellranger-arc/cellranger-arc202_count_7d72f280212342edaa126e1af38c33dc
-/seq/illumina/cellranger-arc/cellranger-arc201_count_f59f16b5b6cdaeaefb41dde136b72982
+/archive/cellgeni/tests/cellranger-arc
+/archive/cellgeni/tests/cellranger-atac
+/archive/cellgeni/tests/cellranger-count
+/archive/cellgeni/tests/cellranger-count-nogz
+/archive/cellgeni/tests/multiplex-flex
+/archive/cellgeni/tests/sample-multiplexing
+/archive/cellgeni/tests/singleplex-crispr
+/archive/cellgeni/tests/starsolo
+/archive/cellgeni/tests/csv/concat
+/archive/cellgeni/tests/csv/concat/file1.csv
