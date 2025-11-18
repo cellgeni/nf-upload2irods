@@ -17,7 +17,7 @@
           },
           "irods/attachmetadata": {
             "branch": "irods",
-            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "git_sha": "3ee4210d424ce8095fb5f22fd64bc77c255b6ec3",
             "installed_by": ["modules"]
           },
           "irods/getmetadata": {
@@ -27,7 +27,7 @@
           },
           "irods/storefile": {
             "branch": "irods",
-            "git_sha": "63281c0544ea0e9f440410f6fd92eda64eb6b4e0",
+            "git_sha": "155b5cda04dda66d5deb2e509eeb652def533e27",
             "installed_by": ["modules"]
           }
         }
